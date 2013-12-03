@@ -1,0 +1,64 @@
+#!/usr/bin/python
+# coding=utf-8
+#
+# Copyright (C) 2012 Allis Tauri <allista@gmail.com>
+# 
+# PBS Utils is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# indicator_gddccontrol is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
+Created on Dec 3, 2013
+
+@author: Allis Tauri <allista@gmail.com>
+'''
+
+import os, time
+from PBSUtils.PBSJob import BatchFileJob
+from PBSUtils.SerialJobFactory import SerialJobFactory
+
+class MrBayesJob(BatchFileJob):
+    
+    _bin         = '/usr/lib/mrbayes-mpi/mb-mpi'
+    _name        = 'mb_run'
+    _description = 'Launch MrBayes as a serial job on a cluster. \
+                    Accepts several .nex files'
+                    
+    def submit(self):
+        super(MrBayesJob, self).submit()
+        jf = SerialJobFactory('mb', host=self._host)
+        for nex_file in self._args.files:
+            #go to the conf file
+            wdir = os.path.dirname(nex_file)
+            if wdir:
+                os.chdir(wdir)
+                nex_file = os.path.basename(nex_file)
+            #run a job
+            job_file = jf.create_job(['NP=$(cat /proc/cpuinfo | grep processor | wc -l)',
+                                      '$(which mpirun) -np=$NP %s %%(file1)s' % self._bin],
+                                     name=nex_file.rstrip('.nex'),
+                                     walltime=self._walltime,
+                                     stagein_files=[nex_file])
+            self._submit_job(job_file)
+            os.unlink(job_file)
+            #wait a second for PBS to get stagein files from jf's tmp dir
+            time.sleep(1)
+    #end def
+#end class
+
+if __name__ == '__main__':
+    try:
+        garli_job = MrBayesJob()
+        garli_job.parse_args()
+        garli_job.submit()
+    except Exception, e:
+        print str(e)
+        exit(1)

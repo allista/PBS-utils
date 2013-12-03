@@ -1,0 +1,78 @@
+#!/usr/bin/python
+# coding=utf-8
+#
+# Copyright (C) 2012 Allis Tauri <allista@gmail.com>
+# 
+# PBS Utils is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# indicator_gddccontrol is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
+Created on Dec 2, 2013
+
+@author: Allis Tauri <allista@gmail.com>
+'''
+
+import os, time
+from PBSUtils.PBSJob import BatchFileJob
+from PBSUtils.SerialJobFactory import SerialJobFactory
+
+class GarliJob(BatchFileJob):
+    
+    _bin         = '/usr/local/bin/Garli'
+    _name        = 'garli_run'
+    _description = 'Launch GARLI as a serial job on a cluster. \
+                    Accepts several .conf files'
+    
+    def submit(self):
+        super(GarliJob, self).submit()
+        jf = SerialJobFactory('garli', host=self._host)
+        for conf_file in self._args.files:
+            #go to the conf file
+            wdir = os.path.dirname(conf_file)
+            if wdir:
+                os.chdir(wdir)
+                conf_file = os.path.basename(conf_file)
+            #get nex filename form conf filename
+            nex_file = None
+            for line in open(conf_file, 'r'):
+                if not line: continue
+                words = line.split('=')
+                if words[0].strip() == 'datafname':
+                    nex_file = words[1].strip()
+                    break
+            #check nex file
+            if not nex_file:
+                print 'No datafname option was found in %s' % conf_file
+                continue
+            if not os.path.isfile(nex_file):
+                print 'No such file: %s' % nex_file
+                continue
+            #run a job
+            job_file = jf.create_job([self._bin+' %(file1)s'],
+                                     name=nex_file.rstrip('.nex'),
+                                     walltime=self._walltime,
+                                     stagein_files=[conf_file, nex_file])
+            self._submit_job(job_file)
+            os.unlink(job_file)
+            #wait a second for PBS to get stagein files from jf's tmp dir
+            time.sleep(1)
+    #end def
+#end class
+
+if __name__ == '__main__':
+    try:
+        garli_job = GarliJob()
+        garli_job.parse_args()
+        garli_job.submit()
+    except Exception, e:
+        print str(e)
+        exit(1)
