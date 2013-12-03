@@ -33,34 +33,45 @@ class PBSJob(object):
     '''Base class for PBS jobs'''
     __metaclass__ = abc.ABCMeta
     
-    _bin         = ''
+    _bin         = None
     _name        = None
     _description = None
 
     def __init__(self):
+        #init members and restore configuration
         self._args      = None
         self._host      = None
         self._walltime  = None
+        self._email     = os.getenv('DEBEMAIL')
         self._save_jobs = False        
         self._restore_settings()
-        _conf_msg    = ('You don\'t have to call %s with this '
-                        'option each time: the value is stored '
-                        'in %s.' % (self._name, self._config_file()))
+        #standard messages
+        _conf_msg  = ('You don\'t have to call %s with this '
+                      'option each time: the value is stored '
+                      'in %s.' % (self._name, self._config_file()))
+        _setto_msg = ' Currently is set to %s.'
+        #argument parser
         self._parser = argparse.ArgumentParser(prog=self._name,
                                                description=self._description)
         self._add_nodes_argument()
         self._parser.add_argument('-W','--walltime', metavar='HH:MM:SS', 
                                   type=str, nargs=1,
                                   help='Job time limit.')
+        self._parser.add_argument('-M','--mail-address', metavar='you@domain.com', 
+                                  type=str, nargs=1,
+                                  help=('E-mail address to send job status '
+                                         'notifications. If you don\'t want to '
+                                         'receive them, set to "". '+_conf_msg+
+                                         (_setto_msg % self._email if self._email 
+                                          else ' Currently not set.')))
         self._parser.add_argument('-E','--executable', metavar='path', 
                                   type=str, nargs=1,
-                                  help=(('Path to the executable. '+_conf_msg+
-                                         ' Currently is set to %s.')
-                                        % self._bin))
+                                  help=('Path to the executable. '+_conf_msg+
+                                         _setto_msg % self._bin))
         self._parser.add_argument('--save-job-script', 
                                   action='store_true', default=False,
                                   help='Save job script to a file. May be useful '
-                                  'to find problems or resubmit the same job later.')
+                                  'to analyze problems or resubmit the same job later.')
     #end def
     
     def _add_nodes_argument(self):
@@ -72,10 +83,12 @@ class PBSJob(object):
     def parse_args(self): 
         self._args      = self._parser.parse_args()
         self._walltime  = self._args.walltime[0] if self._args.walltime else None
+        if self._args.mail_address:
+            self._email = self._args.mail_address[0]
         self._save_jobs = self._args.save_job_script 
         if self._args.executable:
-            self._bin = self._args.executable[0]
-            self._save_settings()
+            self._bin   = self._args.executable[0]
+        self._save_settings()
     #end def
     
     
@@ -110,23 +123,28 @@ class PBSJob(object):
         return config
     #end def
     
-    @classmethod
-    def _restore_settings(cls):
-        config = cls._get_config()
+    def _restore_settings(self):
+        config = self._get_config()
         if config is None: return
         #read in options
-        if config.has_option(cls._name, 'executable'):
-            cls._bin = config.get(cls._name, 'executable').decode('UTF-8')
+        if config.has_option('common', 'email'):
+            self._email = config.get('common', 'email').decode('UTF-8')
+        #read in options
+        if config.has_option(self._name, 'executable'):
+            self._bin = config.get(self._name, 'executable').decode('UTF-8')
     #end def
     
     def _save_settings(self):
         config = self._get_config()
         if config is None: 
             config = SafeConfigParser()
-        #setup program section
+        #setup common and program sections
+        if not config.has_section('common'):
+            config.add_section('common')
         if not config.has_section(self._name):
             config.add_section(self._name)
         #set options
+        config.set('common', 'email', unicode(self._email).encode('UTF-8'))
         config.set(self._name, 'executable', unicode(self._bin).encode('UTF-8'))
         #save
         config.write(open(self._config_file(), 'wb'))
@@ -176,7 +194,9 @@ class SerialJob(PBSJob):
     def parse_args(self):
         super(SerialJob, self).parse_args()
         self._host = self._args.host[0] if self._args.host else None
-        self._jf   = SerialJobFactory(self._name, host=self._host)
+        self._jf   = SerialJobFactory(self._name, 
+                                      host=self._host, 
+                                      email=self._email)
     #end def
 
     def _add_nodes_argument(self):

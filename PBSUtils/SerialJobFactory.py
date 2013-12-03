@@ -31,11 +31,11 @@ class SerialJobFactory(object):
     _nodes      = dict()
     _min_ppn    = None
     
-    def __init__(self, name, host=None):
+    def __init__(self, name, host=None, email=None):
         self._init_nodes()
         self._name     = self._time_name(name)
         self._host     = self._host(host)
-        self._email    = os.getenv('DEBEMAIL')
+        self._email    = email
         self._hostname = socket.gethostname()
         self._tmpdir   = mkdtemp(prefix=self._name+'-setup-')
     #end def
@@ -90,11 +90,11 @@ class SerialJobFactory(object):
     
      
     
-    def create_job(self, commands, name=None, walltime=None, restartable=False, stagein_files=None,):
+    def create_job(self, commands, name=None, walltime=None, restartable=False, stagein_files=None):
         if not commands: raise ValueError('SerialJobFactory.create_job: commands '
                                           'should be a non-empty list of strings')
         if not name: name = self._name
-        else: name = self._time_name(name) 
+        else: name = self._time_name(name)
         job_file = NamedTemporaryFile(prefix=name+'-',
                                       suffix='.job',
                                       delete=False)
@@ -110,7 +110,7 @@ class SerialJobFactory(object):
         if walltime:
             job_file.write('#PBS -l walltime=%s\n' % walltime)
         if self._email:
-            job_file.write('#PBS -m ae -M %s\n' % self._email)
+            job_file.write('#PBS -m abe -M %s\n' % self._email)
         #stageins
         if stagein_files:
             stagein_files = self._prepare_stagein(stagein_files)
