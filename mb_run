@@ -21,36 +21,22 @@ Created on Dec 3, 2013
 @author: Allis Tauri <allista@gmail.com>
 '''
 
-import os, time
-from PBSUtils.PBSJob import BatchFileJob
-from PBSUtils.SerialJobFactory import SerialJobFactory
+from PBSUtils.PBSJob import BatchFileJob, SerialJob
 
-class MrBayesJob(BatchFileJob):
+class MrBayesJob(SerialJob, BatchFileJob):
     
     _bin         = '/usr/lib/mrbayes-mpi/mb-mpi'
     _name        = 'mb_run'
     _description = 'Launch MrBayes as a serial job on a cluster. \
                     Accepts several .nex files.'
+    _extension   = '.nex'
                     
-    def submit(self):
-        super(MrBayesJob, self).submit()
-        jf = SerialJobFactory('mb', host=self._host)
-        for nex_file in self._args.files:
-            #go to the conf file
-            wdir = os.path.dirname(nex_file)
-            if wdir:
-                os.chdir(wdir)
-                nex_file = os.path.basename(nex_file)
-            #run a job
-            job_file = jf.create_job(['NP=$(cat /proc/cpuinfo | grep processor | wc -l)',
-                                      '$(which mpirun) -np $NP %s %%(file1)s' % self._bin],
-                                     name=nex_file.rstrip('.nex'),
-                                     walltime=self._walltime,
-                                     stagein_files=[nex_file])
-            self._submit_job(job_file)
-            os.unlink(job_file)
-            #wait a second for PBS to get stagein files from jf's tmp dir
-            time.sleep(1)
+    def _new_job(self, nex_file):
+        return self._jf.create_job(['NP=$(cat /proc/cpuinfo | grep processor | wc -l)',
+                                    '$(which mpirun) -np $NP %s %%(file1)s' % self._bin],
+                                   name=nex_file.rstrip('.nex'),
+                                   walltime=self._walltime,
+                                   stagein_files=[nex_file])
     #end def
 #end class
 

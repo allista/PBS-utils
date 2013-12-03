@@ -32,12 +32,13 @@ def read(fname):
 from distutils.core import setup
 setup(name='PBS-utils',
       version='1.0',
-      description=('Utility scripts to run bioinformatic programs on PBS server'),
+      description=('Utility scripts to run arbitrary bioinformatics software '
+                   'on a PBS server'),
       long_description=read('README'),
       license='GPL-3',
       author='Allis Tauri',
       author_email='allista@gmail.com',
-      #url='https://launchpad.net/degenprimer',
+      #url='https://launchpad.net/',
       classifiers=[
         'Development Status :: 3 - Alpha',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
