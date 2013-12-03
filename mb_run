@@ -30,7 +30,7 @@ class MrBayesJob(BatchFileJob):
     _bin         = '/usr/lib/mrbayes-mpi/mb-mpi'
     _name        = 'mb_run'
     _description = 'Launch MrBayes as a serial job on a cluster. \
-                    Accepts several .nex files'
+                    Accepts several .nex files.'
                     
     def submit(self):
         super(MrBayesJob, self).submit()
@@ -43,7 +43,7 @@ class MrBayesJob(BatchFileJob):
                 nex_file = os.path.basename(nex_file)
             #run a job
             job_file = jf.create_job(['NP=$(cat /proc/cpuinfo | grep processor | wc -l)',
-                                      '$(which mpirun) -np=$NP %s %%(file1)s' % self._bin],
+                                      '$(which mpirun) -np $NP %s %%(file1)s' % self._bin],
                                      name=nex_file.rstrip('.nex'),
                                      walltime=self._walltime,
                                      stagein_files=[nex_file])

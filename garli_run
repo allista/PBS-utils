@@ -30,7 +30,7 @@ class GarliJob(BatchFileJob):
     _bin         = '/usr/local/bin/Garli'
     _name        = 'garli_run'
     _description = 'Launch GARLI as a serial job on a cluster. \
-                    Accepts several .conf files'
+                    Accepts several .conf files.'
     
     def submit(self):
         super(GarliJob, self).submit()

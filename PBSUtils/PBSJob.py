@@ -38,7 +38,7 @@ class PBSJob(object):
                                                description=self._description)
         self._parser.add_argument('-H','--host', metavar='hostname', 
                                   type=str, nargs=1,
-                                  help='one of the hosts in a cluster')
+                                  help='the host at which job should be run')
         self._parser.add_argument('-W','--walltime', metavar='HH:MM:SS', 
                                   type=str, nargs=1,
                                   help='job time limit')
@@ -61,32 +61,6 @@ class PBSJob(object):
         try: qsub = subprocess.Popen(('qsub', job_file))
         except OSError: print '\nFaild to execute qsub'
         qsub.wait()
-    #end def
-    
-    @classmethod
-    def _is_exe(cls, fname):
-        return os.path.isfile(fname) and os.access(fname, os.X_OK)
-    
-    @classmethod
-    def _which(cls, _bin):
-        fpath, _fname = os.path.split(_bin)
-        if fpath:
-            if not cls._is_exe(_bin):
-                raise RuntimeError('%s is not executable' % _bin)
-            return _bin
-        else:
-            for path in os.environ["PATH"].split(os.pathsep):
-                path = path.strip('"')
-                exe_file = os.path.join(path, _bin)
-                if cls._is_exe(exe_file):
-                    return exe_file
-            raise RuntimeError('%s was not found in the PATH' % _bin)
-    #end def
-    
-    @classmethod
-    def _init_bin(cls):
-        if not cls._bin: return
-        cls._bin = cls._which(cls._bin)
     #end def
 #end def
 
