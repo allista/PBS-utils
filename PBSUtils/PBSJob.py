@@ -60,8 +60,8 @@ class PBSJob(object):
         self._parser.add_argument('-M','--mail-address', metavar='you@domain.com', 
                                   type=str, nargs=1,
                                   help=('E-mail address to send job status '
-                                         'notifications. If you don\'t want to '
-                                         'receive them, set to "". '+_conf_msg+
+                                        'notifications to. If you don\'t want to '
+                                        'receive them, set to "". '+_conf_msg+
                                          (_setto_msg % self._email if self._email 
                                           else ' Currently not set.')))
         self._parser.add_argument('-E','--executable', metavar='path', 
@@ -206,3 +206,14 @@ class SerialJob(PBSJob):
                                   'If not provided, first available node is used.')
     #end def
 #end class
+
+
+def job_main(job):
+    import sys
+    try:
+        job.parse_args()
+        job.submit()
+    except Exception, e:
+        print str(e)
+        sys.exit(1)
+#end def

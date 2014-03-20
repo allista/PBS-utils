@@ -1,3 +1,4 @@
 *.conf
 *.nex
 ./build
+./dist

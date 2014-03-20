@@ -21,7 +21,7 @@ Created on Dec 3, 2013
 @author: Allis Tauri <allista@gmail.com>
 '''
 
-from PBSUtils.PBSJob import BatchFileJob, SerialJob
+from PBSUtils.PBSJob import BatchFileJob, SerialJob, job_main
 
 class MrBayesJob(SerialJob, BatchFileJob):
     
@@ -34,17 +34,11 @@ class MrBayesJob(SerialJob, BatchFileJob):
     def _new_job(self, nex_file):
         return self._jf.create_job(['NP=$(cat /proc/cpuinfo | grep processor | wc -l)',
                                     '$(which mpirun) -np $NP %s %%(file1)s' % self._bin],
-                                   name=nex_file.rstrip('.nex'),
+                                   name=nex_file.rstrip(self._extension),
                                    walltime=self._walltime,
                                    stagein_files=[nex_file])
     #end def
 #end class
 
 if __name__ == '__main__':
-    try:
-        garli_job = MrBayesJob()
-        garli_job.parse_args()
-        garli_job.submit()
-    except Exception, e:
-        print str(e)
-        exit(1)
+    job_main(MrBayesJob())

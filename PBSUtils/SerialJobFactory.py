@@ -127,8 +127,11 @@ class SerialJobFactory(object):
             except TypeError: pass
             job_file.write(cmd+'\n')
         #copy all output files back to the working directory
-        job_file.write('scp * %(runner)s:%(wdir)s/' % {'runner': self._hostname,
-                                                       'wdir': os.getcwd()})
+        job_file.write(('if [[ "%(runner)s" == $(hostname) ]];\n'
+                        'then  cp -r * %(wdir)s/;\n'
+                        'else scp -r * %(runner)s:%(wdir)s/;\n'
+                        'fi') % {'runner': self._hostname,
+                                 'wdir':   os.getcwd().replace(' ', '\ ')})
         job_file.close()
         return job_file.name
     #end def

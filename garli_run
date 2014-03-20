@@ -22,7 +22,7 @@ Created on Dec 2, 2013
 '''
 
 import os
-from PBSUtils.PBSJob import BatchFileJob, SerialJob
+from PBSUtils.PBSJob import BatchFileJob, SerialJob, job_main
 
 class GarliJob(SerialJob, BatchFileJob):
     
@@ -58,10 +58,4 @@ class GarliJob(SerialJob, BatchFileJob):
 #end class
 
 if __name__ == '__main__':
-    try:
-        garli_job = GarliJob()
-        garli_job.parse_args()
-        garli_job.submit()
-    except Exception, e:
-        print str(e)
-        exit(1)
+    job_main(GarliJob())

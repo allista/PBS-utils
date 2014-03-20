@@ -31,7 +31,7 @@ def read(fname):
 
 from distutils.core import setup
 setup(name='PBS-utils',
-      version='1.0',
+      version='1.1',
       description=('Utility scripts to run arbitrary bioinformatics software '
                    'on a PBS server'),
       long_description=read('README'),
@@ -46,5 +46,5 @@ setup(name='PBS-utils',
         'Operating System :: POSIX',
         'Programming Language :: Python'],
       packages=['PBSUtils'],
-      scripts=['mb_run', 'garli_run'],
+      scripts=['mb_run', 'garli_run', 'degen_primer_run'],
       )

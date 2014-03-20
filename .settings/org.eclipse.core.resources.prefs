@@ -1,6 +1,7 @@
 eclipse.preferences.version=1
 encoding//PBSUtils/PBSJob.py=utf-8
 encoding//PBSUtils/SerialJobFactory.py=utf-8
+encoding/degen_primer_run=utf-8
 encoding/garli_run=utf-8
 encoding/mb_run=utf-8
 encoding/setup.py=utf-8
